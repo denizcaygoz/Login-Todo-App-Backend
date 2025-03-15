@@ -26,13 +26,13 @@ public class JwtUtils {
     }
 
     // Generate JWT token for a user
-    public String generateToken(UserDetailsImpl userPrincipal) {
+    public String generateToken(String username) {
         return Jwts.builder()
-                .setSubject(userPrincipal.getUsername()) // Set username
-                .setIssuedAt(new Date()) // Set current timestamp
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)) // Expiry
-                .signWith(key(), SignatureAlgorithm.HS256) // Sign token
-                .compact();
+        .setSubject(username)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+        .signWith(key(), SignatureAlgorithm.HS256)
+        .compact();
     }
 
     // Get username from JWT token
