@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.login_todo_app_backend.models.User;
 import com.login_todo_app_backend.repository.UserRepository;
 
+//this class fetches user details from the database for authentication.
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired

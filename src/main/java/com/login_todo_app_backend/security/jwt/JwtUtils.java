@@ -8,6 +8,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+//Provides utility methods for creating, parsing, and validating JWT tokens, also extracting user details from a token.
 @Component
 public class JwtUtils {
 
