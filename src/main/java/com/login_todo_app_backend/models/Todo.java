@@ -1,31 +1,33 @@
 package com.login_todo_app_backend.models;
-import jakarta.persistence.*;
-import lombok.*;
 
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
 @Entity
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
 @Table(name = "todos")
 public class Todo {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)
     private String task;
 
-    @Column(nullable = false)
-    private boolean isCompleted = false;
+    @Column(name = "is_completed", nullable = false)
+    private boolean completed = false;
 
-    @Column(nullable = false)
-    private boolean isDeleted = false;
+    @Column(name = "is_deleted", nullable = false)
+    private boolean deleted = false;
 
-    @Column(nullable = false, updatable = false)
-    private String createdAt = String.valueOf(java.time.LocalDateTime.now());
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    
 }
 
