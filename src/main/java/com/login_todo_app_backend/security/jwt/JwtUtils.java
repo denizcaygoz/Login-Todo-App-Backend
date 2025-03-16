@@ -1,8 +1,9 @@
 package com.login_todo_app_backend.security.jwt;
 import java.security.Key;
 import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.login_todo_app_backend.security.services.UserDetailsImpl;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -12,13 +13,18 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtils {
 
-    private final String jwtSecret;
-    private final long jwtExpirationMs;
-    
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-    public JwtUtils(String jwtSecret, long jwtExpirationMs) {
-        this.jwtSecret = jwtSecret;
-        this.jwtExpirationMs = jwtExpirationMs;
+    @Value("${jwt.expirationMs}")
+    private long jwtExpirationMs;
+
+    public String getJwtSecret() {
+        return jwtSecret;
+    }
+
+    public long getJwtExpirationMs() {
+        return jwtExpirationMs;
     }
 
     private Key key() {

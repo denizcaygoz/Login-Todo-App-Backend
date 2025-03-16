@@ -1,7 +1,5 @@
 package com.login_todo_app_backend.controllers;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.login_todo_app_backend.models.ERole;
-import com.login_todo_app_backend.models.Role;
 import com.login_todo_app_backend.models.User;
 import com.login_todo_app_backend.payload.request.LoginRequest;
 import com.login_todo_app_backend.payload.request.SignupRequest;
-import com.login_todo_app_backend.payload.response.UserInfoResponse;
+import com.login_todo_app_backend.payload.response.UserResponse;
 import com.login_todo_app_backend.payload.response.MessageResponse;
-import com.login_todo_app_backend.repository.RoleRepository;
 import com.login_todo_app_backend.repository.UserRepository;
 import com.login_todo_app_backend.security.jwt.JwtUtils;
 import com.login_todo_app_backend.security.services.UserDetailsImpl;
@@ -33,9 +28,6 @@ public class AuthController {
    
     @Autowired
     private UserRepository userRepository;
-   
-    @Autowired
-    private RoleRepository roleRepository;
    
     @Autowired
     private PasswordEncoder encoder;
@@ -56,6 +48,9 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
    
+        if (userDetails == null || userDetails.getUsername() == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Authentication failed."));
+        }
         //Generate JWT Token
         String jwt = jwtUtils.generateToken(userDetails.getUsername());
    
@@ -64,13 +59,14 @@ public class AuthController {
             .collect(Collectors.toList());
    
         //Send JWT Token in Response
-        return ResponseEntity.ok(new UserInfoResponse(
+        /*return ResponseEntity.ok(new UserInfoResponse(
             userDetails.getId(),
             userDetails.getUsername(),
             userDetails.getEmail(),
             roles,
             jwt
-        ));
+        ));*/
+        return ResponseEntity.ok(new UserResponse(jwt));
     }
    
     /**
@@ -87,43 +83,28 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
         }
    
-        //Create new user with hashed password
-        User user = new User(
-            signUpRequest.getUsername(),
-            signUpRequest.getEmail(),
-            encoder.encode(signUpRequest.getPassword()),
-            new HashSet<>()
-            );
+        User user = new User();
+        user.setUsername(signUpRequest.getUsername());
+        user.setEmail(signUpRequest.getEmail());
+        user.setPassword(encoder.encode(signUpRequest.getPassword()));
    
-        //Assign roles
-        Set<String> strRoles = signUpRequest.getRole();
-        Set<Role> roles = new HashSet<>();
-   
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role.toLowerCase()) {
-                    case "admin":
-                        roles.add(roleRepository.findByName(ERole.ROLE_ADMIN)
-                              .orElseThrow(() -> new RuntimeException("Error: Role is not found.")));
-                        break;
-                    case "mod":
-                        roles.add(roleRepository.findByName(ERole.ROLE_MODERATOR)
-                              .orElseThrow(() -> new RuntimeException("Error: Role is not found.")));
-                        break;
-                    default:
-                        roles.add(roleRepository.findByName(ERole.ROLE_USER)
-                              .orElseThrow(() -> new RuntimeException("Error: Role is not found.")));
-                }
-            });
-        }
-   
-        user.setRoles(roles);
-        userRepository.save(user);
-   
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        userRepository.saveAndFlush(user);
+
+        // Authenticate the user
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(signUpRequest.getUsername(), signUpRequest.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        // Generate JWT Token
+        String jwt = jwtUtils.generateToken(userDetails.getUsername());
+
+        List<String> roles = userDetails.getAuthorities().stream()
+            .map(item -> item.getAuthority())
+            .collect(Collectors.toList());
+
+        // Send JWT Token in Response
+        return ResponseEntity.ok(new UserResponse(jwt));
     }
 }   
