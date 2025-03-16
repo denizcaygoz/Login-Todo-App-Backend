@@ -1,27 +1,23 @@
 package com.login_todo_app_backend.security.jwt;
 
 import io.github.cdimascio.dotenv.Dotenv;
-
-import java.nio.file.Paths;
-
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-//Loads environment variables from a .env file.
+
 @Configuration
 public class EnvConfig {
-    @Bean
-    public Dotenv dotenv() {
-        Dotenv dotenv = Dotenv.configure().directory(Paths.get(System.getProperty("user.dir")).toString()).ignoreIfMissing().load();
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
-        return dotenv;
+
+    static {
+        Dotenv dotenv = Dotenv.load();
+        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
+        System.setProperty("JWT_EXPIRATION_MS", dotenv.get("JWT_EXPIRATION_MS"));
+        System.setProperty("DB_HOST", dotenv.get("DB_HOST"));
+        System.setProperty("DB_PORT", dotenv.get("DB_PORT"));
+        System.setProperty("DB_NAME", dotenv.get("DB_NAME"));
+        System.setProperty("DB_USER", dotenv.get("DB_USER"));
+        System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
     }
-    @Bean
-    public String jwtSecret(Environment environment) {
-        return environment.getProperty("jwt.secret", "default-secret-key");
-    }
-    @Bean
-    public long jwtExpirationMs(Environment environment) {
-        return Long.parseLong(environment.getProperty("jwt.expirationMs", "86400000"));
+
+    public static Dotenv getDotenv() {
+        return Dotenv.load();
     }
 }
