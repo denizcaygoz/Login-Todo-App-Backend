@@ -15,6 +15,7 @@ import com.login_todo_app_backend.payload.request.SignupRequest;
 import com.login_todo_app_backend.payload.response.UserInfoResponse;
 import com.login_todo_app_backend.payload.response.MessageResponse;
 import com.login_todo_app_backend.payload.response.TodoResponse;
+import com.login_todo_app_backend.payload.response.TokenRefreshResponse;
 import com.login_todo_app_backend.repository.UserRepository;
 import com.login_todo_app_backend.repository.TodoRepository;
 import com.login_todo_app_backend.security.jwt.JwtUtils;
@@ -142,5 +143,52 @@ public class AuthController {
             jwt,
             List.of() 
         ));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader,
+                                         @RequestParam String username) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid Authorization header"));
+        }
+
+        //Extracting token
+        String expiredToken = authHeader.substring(7);
+        
+        try {
+            //Verify token's signature 
+            if (!jwtUtils.validateJwtToken(expiredToken) && !jwtUtils.isTokenExpired(expiredToken)) {
+                // If token is invalid and not just expired, reject it
+                return ResponseEntity.status(401).body(new MessageResponse("Error: Invalid token"));
+            }
+            
+            //Checking if token is expired
+            if (!jwtUtils.isTokenExpired(expiredToken)) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error: Token is not expired yet"));
+            }
+            
+            //Getting username from token
+            String usernameFromToken = jwtUtils.getUserNameFromJwtToken(expiredToken);
+            
+            //Verifing username matches
+            if (!usernameFromToken.equals(username)) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error: Token username mismatch"));
+            }
+            
+            //Checking if user exists
+            User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Error: User not found"));
+            
+            //Generating a new token
+            String newToken = jwtUtils.generateToken(username);
+            
+            //Retruns the new token
+            return ResponseEntity.ok(new TokenRefreshResponse(newToken));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(new MessageResponse(
+                "Error: Could not refresh token. Log in again. " + e.getMessage()
+            ));
+        }
     }
 }   

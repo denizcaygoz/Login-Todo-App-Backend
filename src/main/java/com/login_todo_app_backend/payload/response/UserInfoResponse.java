@@ -1,7 +1,7 @@
 package com.login_todo_app_backend.payload.response;
 
-import com.login_todo_app_backend.models.Todo;
 import java.util.List;
+import java.util.Collections;
 
 public class UserInfoResponse {
     private String username;
@@ -12,6 +12,12 @@ public class UserInfoResponse {
         this.username = username;
         this.jwtToken = jwtToken;
         this.todos = todos;
+    }
+    
+    public UserInfoResponse(String jwtToken) {
+        this.jwtToken = jwtToken;
+        this.username = null;
+        this.todos = Collections.emptyList();
     }
 
     public String getUsername() {
