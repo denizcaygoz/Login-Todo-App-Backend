@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.login_todo_app_backend.models.User;
-import com.login_todo_app_backend.models.Todo;
 import com.login_todo_app_backend.payload.request.LoginRequest;
 import com.login_todo_app_backend.payload.request.SignupRequest;
 import com.login_todo_app_backend.payload.response.UserInfoResponse;
@@ -43,18 +42,22 @@ public class AuthController {
     @GetMapping("/validate")
     public ResponseEntity<?> validateTokenAndGetUserData(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            
+        String token = authHeader.substring(7);
+
             if (jwtUtils.validateJwtToken(token)) {
                 String username = jwtUtils.getUserNameFromJwtToken(token);
                 User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Error: User not found."));
-                
-                List<Todo> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId());
-                
-                // Generating a new token
+                        .orElseThrow(() -> new RuntimeException("Error: User not found."));
+
+                //Converting todos to DTO format
+                List<TodoResponse> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId())
+                    .stream()
+                    .map(todo -> new TodoResponse(todo.getId(), todo.getTask(), todo.isCompleted(), todo.isDeleted(), todo.getCreatedAt()))
+                    .toList();
+
+                //Generating a new token
                 String newToken = jwtUtils.generateToken(username);
-                
+
                 return ResponseEntity.ok(new UserInfoResponse(
                     username,
                     newToken,
@@ -62,9 +65,10 @@ public class AuthController {
                 ));
             }
         }
-        
+
         return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid or missing token"));
     }
+
    
     /**
      * Handles user login
@@ -73,7 +77,7 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
                                         @RequestHeader(value = "Authorization", required = false) String authHeader) {
-    // Validate JWT
+    //Validating JWT
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
         String token = authHeader.substring(7);
         if (!jwtUtils.validateJwtToken(token)) {
@@ -86,17 +90,17 @@ public class AuthController {
         }
     }
 
-    // Authenticate user
+    //Authenticate user
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
     UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-    // Generate new JWT Token
+    //Generating new JWT Token
     String jwt = jwtUtils.generateToken(userDetails.getUsername());
 
-    // Get user's todos and convert them to DTOs
+    //Getting user's todos and convert them to DTOs
     List<TodoResponse> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userDetails.getId())
         .stream()
         .map(todo -> new TodoResponse(todo.getId(), todo.getTask(), todo.isCompleted(), todo.isDeleted(), todo.getCreatedAt()))
@@ -130,7 +134,7 @@ public class AuthController {
    
         userRepository.save(user);
 
-        // Generating JWT Token for the new user
+        //Generating JWT Token for the new user
         String jwt = jwtUtils.generateToken(user.getUsername());
 
         return ResponseEntity.ok(new UserInfoResponse(
