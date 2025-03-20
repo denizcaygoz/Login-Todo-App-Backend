@@ -57,9 +57,9 @@ public class AuthController {
     String jwt = jwtUtils.generateToken(userDetails.getUsername());
 
     //Getting user's todos and convert them to DTOs
-    List<TodoResponse> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userDetails.getId())
+    List<TodoResponse> todos = todoRepository.findByUserId(userDetails.getId())
         .stream()
-        .map(todo -> new TodoResponse(todo.getId(), todo.getTask(), todo.isCompleted(), todo.isDeleted(), todo.getCreatedAt()))
+        .map(todo -> new TodoResponse(todo.getTask(), todo.isCompleted()))
         .toList();
 
     return ResponseEntity.ok(new UserInfoResponse(

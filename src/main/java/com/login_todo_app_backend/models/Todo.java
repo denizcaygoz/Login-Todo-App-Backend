@@ -1,8 +1,15 @@
 package com.login_todo_app_backend.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -21,12 +28,6 @@ public class Todo {
 
     @Column(name = "is_completed", nullable = false)
     private boolean completed = false;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
 
     
 }

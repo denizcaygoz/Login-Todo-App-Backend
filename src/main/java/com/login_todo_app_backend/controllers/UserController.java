@@ -50,14 +50,11 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("Error: User not found"));
         
         //Converting todos to DTO format to return back to frontend
-        List<TodoResponse> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId())
+        List<TodoResponse> todos = todoRepository.findByUserId((user.getId()))
                 .stream()
                 .map(todo -> new TodoResponse(
-                    todo.getId(), 
                     todo.getTask(), 
-                    todo.isCompleted(), 
-                    todo.isDeleted(), 
-                    todo.getCreatedAt()))
+                    todo.isCompleted()))
                 .toList();
         
         //Returning empty list if user doesnt have any
@@ -89,11 +86,7 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("Error: User not found"));
         
         //Deleting all existing todos 
-        List<Todo> existingTodos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId());
-        for (Todo todo : existingTodos) {
-            todo.setDeleted(true);
-            todoRepository.save(todo);
-        }
+        todoRepository.deleteByUserId(user.getId());
         
         //Creating new todos from the request
         List<Todo> newTodos = new ArrayList<>();
@@ -103,7 +96,6 @@ public class UserController {
                 todo.setUser(user);
                 todo.setTask(todoRequest.getTask());
                 todo.setCompleted(todoRequest.isCompleted());
-                todo.setDeleted(false);
                 newTodos.add(todoRepository.save(todo));
             }
         }
@@ -111,11 +103,9 @@ public class UserController {
         //Converting and returning the new todos
         List<TodoResponse> todoResponses = newTodos.stream()
                 .map(todo -> new TodoResponse(
-                    todo.getId(),
                     todo.getTask(),
-                    todo.isCompleted(),
-                    todo.isDeleted(),
-                    todo.getCreatedAt()))
+                    todo.isCompleted()
+                    ))
                 .collect(Collectors.toList());
         
         return ResponseEntity.ok(todoResponses);
