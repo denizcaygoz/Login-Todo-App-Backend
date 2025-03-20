@@ -31,8 +31,7 @@ public class UserController {
     private JwtUtils jwtUtils;
     
     @GetMapping("/todolist")
-    public ResponseEntity<?> getUserTodoList(@RequestParam String username,
-                                            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getUserTodoList(@RequestHeader("Authorization") String authHeader) {
         //Validating token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Authorization header missing or invalid"));
@@ -43,11 +42,8 @@ public class UserController {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid token"));
         }
         
-        //Validating if username has the right token
-        String usernameFromToken = jwtUtils.getUserNameFromJwtToken(token);
-        if (!usernameFromToken.equals(username)) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Token username mismatch"));
-        }
+        //Extract username from token
+        String username = jwtUtils.getUserNameFromJwtToken(token);
         
         //Fetching todos for the user
         User user = userRepository.findByUsername(username)
@@ -74,7 +70,7 @@ public class UserController {
     
     @PostMapping("/todolist")
     @Transactional
-    public ResponseEntity<?> updateTodoList(@RequestBody UpdateTodoListRequest request,
+    public ResponseEntity<?> updateTodoList(@RequestBody List<TodoResponse> todos,
                                            @RequestHeader("Authorization") String authHeader) {
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -86,12 +82,10 @@ public class UserController {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid token"));
         }
         
-        String usernameFromToken = jwtUtils.getUserNameFromJwtToken(token);
-        if (!usernameFromToken.equals(request.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Token username mismatch"));
-        }
+        //Getting username info from token
+        String username = jwtUtils.getUserNameFromJwtToken(token);
         
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Error: User not found"));
         
         //Deleting all existing todos 
@@ -103,8 +97,8 @@ public class UserController {
         
         //Creating new todos from the request
         List<Todo> newTodos = new ArrayList<>();
-        if (request.getTodos() != null) {
-            for (TodoResponse todoRequest : request.getTodos()) {
+        if (todos != null) {
+            for (TodoResponse todoRequest : todos) {
                 Todo todo = new Todo();
                 todo.setUser(user);
                 todo.setTask(todoRequest.getTask());

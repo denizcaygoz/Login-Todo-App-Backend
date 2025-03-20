@@ -40,58 +40,13 @@ public class AuthController {
     @Autowired
     private JwtUtils jwtUtils;
    
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateTokenAndGetUserData(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        String token = authHeader.substring(7);
-
-            if (jwtUtils.validateJwtToken(token)) {
-                String username = jwtUtils.getUserNameFromJwtToken(token);
-                User user = userRepository.findByUsername(username)
-                        .orElseThrow(() -> new RuntimeException("Error: User not found."));
-
-                //Converting todos to DTO format
-                List<TodoResponse> todos = todoRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId())
-                    .stream()
-                    .map(todo -> new TodoResponse(todo.getId(), todo.getTask(), todo.isCompleted(), todo.isDeleted(), todo.getCreatedAt()))
-                    .toList();
-
-                //Generating a new token
-                String newToken = jwtUtils.generateToken(username);
-
-                return ResponseEntity.ok(new UserInfoResponse(
-                    username,
-                    newToken,
-                    todos
-                ));
-            }
-        }
-
-        return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid or missing token"));
-    }
-
-   
     /**
      * Handles user login
      * POST <http://localhost:8080/auth/signin>
      */
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
-                                        @RequestHeader(value = "Authorization", required = false) String authHeader) {
-    //Validating JWT
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        String token = authHeader.substring(7);
-        if (!jwtUtils.validateJwtToken(token)) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid JWT token"));
-        }
-
-        String usernameFromToken = jwtUtils.getUserNameFromJwtToken(token);
-        if (!usernameFromToken.equals(loginRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Token username mismatch"));
-        }
-    }
-
-    //Authenticate user
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    //Authenticating user
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -121,11 +76,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken"));
         }
    
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use"));
         }
    
         User user = new User();
@@ -146,41 +101,35 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader,
-                                         @RequestParam String username) {
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Invalid Authorization header"));
         }
 
         //Extracting token
-        String expiredToken = authHeader.substring(7);
+        String recievedToken = authHeader.substring(7);
         
         try {
             //Verify token's signature 
-            if (!jwtUtils.validateJwtToken(expiredToken) && !jwtUtils.isTokenExpired(expiredToken)) {
+            if (!jwtUtils.validateJwtToken(recievedToken) && !jwtUtils.isTokenExpired(recievedToken)) {
                 // If token is invalid and not just expired, reject it
                 return ResponseEntity.status(401).body(new MessageResponse("Error: Invalid token"));
             }
             
-            //Checking if token is expired
-            if (!jwtUtils.isTokenExpired(expiredToken)) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Error: Token is not expired yet"));
-            }
+            /*//Checking if token is expired
+            if (!jwtUtils.isTokenExpired(recievedToken)) {
+                return ResponseEntity.ok(new MessageResponse("Token is not expired yet"));
+            }*/
             
             //Getting username from token
-            String usernameFromToken = jwtUtils.getUserNameFromJwtToken(expiredToken);
-            
-            //Verifing username matches
-            if (!usernameFromToken.equals(username)) {
-                return ResponseEntity.badRequest().body(new MessageResponse("Error: Token username mismatch"));
-            }
+            String usernameFromToken = jwtUtils.getUserNameFromJwtToken(recievedToken);
             
             //Checking if user exists
-            User user = userRepository.findByUsername(username)
+            User user = userRepository.findByUsername(usernameFromToken)
                 .orElseThrow(() -> new RuntimeException("Error: User not found"));
             
             //Generating a new token
-            String newToken = jwtUtils.generateToken(username);
+            String newToken = jwtUtils.generateToken(usernameFromToken);
             
             //Retruns the new token
             return ResponseEntity.ok(new TokenRefreshResponse(newToken));
