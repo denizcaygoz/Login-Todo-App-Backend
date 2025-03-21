@@ -1,4 +1,4 @@
-# Backend Project - User Authentication and Todo Management
+# Spring Boot Backend Project - User Authentication and Todo Management
 Backend project built using Spring Boot, to handle user authentication and todo list management. The authentication system uses JWT tokens for secure login and registration. Also, the application provides GET and POST endpoints to retrieve and update user todo lists.
 🔗 **[Login-Todo-App-Backend Frontend Project](https://github.com/denizcaygoz/Login-Todo-App)**  
 
@@ -6,7 +6,6 @@ Backend project built using Spring Boot, to handle user authentication and todo 
 
 ## **Features**
 - **User Authentication**: Login and Registration using JWT.
-- **Authorization**: User roles management (Admin, Moderator, User).
 - **Todo Management**: Retrieve and update todos for authenticated users.
 - **Database Integration**: PostgreSQL database managed through pgAdmin.
 
@@ -25,12 +24,11 @@ Backend project built using Spring Boot, to handle user authentication and todo 
 
 ## Technologies Used
 
-- **Spring Boot** (Backend Framework)
+- **Spring Security** (Authorization and Authentication)
+- **Spring Data JPA** (Database interaction)
 - **JWT (JSON Web Token)** (Authentication)
 - **PostgreSQL** (Database)
 - **pgAdmin** (Database Management)
-- **Spring Security** (Authorization and Authentication)
-- **Spring Data JPA** (Database interaction)
 - **Postman** (test the endpoints.)
 
 ---
