@@ -1,7 +1,8 @@
 package com.login_todo_app_backend.security.jwt;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Configuration;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 @Configuration
 public class EnvConfig {
@@ -15,6 +16,8 @@ public class EnvConfig {
         System.setProperty("DB_NAME", dotenv.get("DB_NAME"));
         System.setProperty("DB_USER", dotenv.get("DB_USER"));
         System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+        System.setProperty("POSTGRES_DB", dotenv.get("POSTGRES_DB"));
+        System.setProperty("DB_PASSWORD_2", dotenv.get("DB_PASSWORD_2"));
     }
 
     public static Dotenv getDotenv() {

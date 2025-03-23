@@ -1,6 +1,6 @@
 package com.login_todo_app_backend.controllers;
 import java.util.List;
-import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -8,18 +8,26 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.login_todo_app_backend.models.User;
 import com.login_todo_app_backend.payload.request.LoginRequest;
 import com.login_todo_app_backend.payload.request.SignupRequest;
-import com.login_todo_app_backend.payload.response.UserInfoResponse;
 import com.login_todo_app_backend.payload.response.MessageResponse;
 import com.login_todo_app_backend.payload.response.TodoResponse;
 import com.login_todo_app_backend.payload.response.TokenRefreshResponse;
-import com.login_todo_app_backend.repository.UserRepository;
+import com.login_todo_app_backend.payload.response.UserInfoResponse;
 import com.login_todo_app_backend.repository.TodoRepository;
+import com.login_todo_app_backend.repository.UserRepository;
 import com.login_todo_app_backend.security.jwt.JwtUtils;
 import com.login_todo_app_backend.security.services.UserDetailsImpl;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
